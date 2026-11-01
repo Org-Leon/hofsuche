@@ -1,0 +1,11 @@
+# Eigene Zugangsdaten und Daten bleiben lokal
+config.toml
+.env
+data/hofsuche.db
+data/*.db-journal
+
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store

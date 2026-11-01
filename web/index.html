@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hofsuche Brandenburg</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: Flurkarten-Tool. Kopf mit Kennzahlen, Gewichtungs-Regler, dann eine Rangliste als Karteikarten; Ausgeschiedenes unten. */
+:root{
+  --bg:#eef1ec; --surface:#fbfcfa; --ink:#1d2a22; --muted:#5d6b62; --line:#cfd8d0;
+  --pine:#2e5b45; --pine-soft:#dbe8df; --rape:#c99a12; --rape-soft:#f6ecc9;
+  --ok:#2e7d4f; --warn:#a86b00; --bad:#b0402f; --warn-soft:#f7e7cc; --bad-soft:#f4dcd7;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121814; --surface:#1a221d; --ink:#e3ebe5; --muted:#9aab9f; --line:#2d3a32;
+  --pine:#7fc29d; --pine-soft:#20342a; --rape:#e2b83a; --rape-soft:#3a3218;
+  --ok:#6cc890; --warn:#e2a640; --bad:#ec8a78; --warn-soft:#3a2e17; --bad-soft:#3d2320; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121814; --surface:#1a221d; --ink:#e3ebe5; --muted:#9aab9f; --line:#2d3a32;
+  --pine:#7fc29d; --pine-soft:#20342a; --rape:#e2b83a; --rape-soft:#3a3218;
+  --ok:#6cc890; --warn:#e2a640; --bad:#ec8a78; --warn-soft:#3a2e17; --bad-soft:#3d2320; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:980px;margin:0 auto;display:grid;gap:20px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,5vw,40px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:18px;font-weight:700}
+.eyebrow{font-family:var(--f-display);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--pine)}
+.lede{color:var(--muted);max-width:65ch;margin:6px 0 0}
+.num{font-variant-numeric:tabular-nums}
+header{display:grid;gap:14px}
+.stats{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13px;color:var(--muted)}
+.stats b{color:var(--ink);font-family:var(--f-mono);font-weight:500;margin-right:4px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+details.panel>summary{cursor:pointer;font-family:var(--f-display);font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:12px}
+details.panel>summary::after{content:"+";font-family:var(--f-mono);color:var(--muted)}
+details[open].panel>summary::after{content:"–"}
+.weights{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 20px;margin-top:14px}
+.weights label{display:grid;gap:2px;font-size:13px}
+.weights .lab{display:flex;justify-content:space-between}
+.weights output{font-family:var(--f-mono);color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--pine)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 13px var(--f-body);padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--pine);border-color:var(--pine);color:var(--surface)}
+.chip:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--rape);outline-offset:2px}
+.list{display:grid;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:56px 1fr;gap:4px 14px}
+.card.raus{opacity:.55}
+.rank{font-family:var(--f-display);font-weight:800;font-size:28px;color:var(--muted);line-height:1}
+.score{font-family:var(--f-mono);font-size:13px;color:var(--pine);margin-top:4px}
+.body{min-width:0;display:grid;gap:8px}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;align-items:baseline}
+.head h3{font-size:17px;font-weight:700}
+.where{font-size:13px;color:var(--muted)}
+.bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--line)}
+.bar span{display:block;height:100%}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px 14px;margin:0}
+.facts div{min-width:0}
+.facts dt{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:0;font-family:var(--f-mono);font-size:14px;font-variant-numeric:tabular-nums}
+.badges{display:flex;flex-wrap:wrap;gap:6px}
+.badge{font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--pine-soft);color:var(--pine)}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.bad{background:var(--bad-soft);color:var(--bad)}
+.badge.ilb{background:var(--rape-soft);color:var(--warn)}
+.info{font-size:14px;margin:0;max-width:72ch}
+.transit{font-size:13px;color:var(--muted);margin:0}
+.actions{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.actions a{color:var(--pine);font-weight:600;text-decoration:none;border-bottom:1px solid currentColor}
+select,textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+textarea{width:100%;min-height:38px;resize:vertical}
+.note-row{display:grid;gap:4px}
+.saved{font-size:12px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.empty{color:var(--muted);text-align:center;padding:28px 12px}
+.method{font-size:13px;color:var(--muted);display:grid;gap:6px}
+.method p{margin:0;max-width:75ch}
+.banner{font-size:13px;padding:8px 12px;border-radius:6px;background:var(--warn-soft);color:var(--warn)}
+@media (max-width:520px){.card{grid-template-columns:1fr}.rank{font-size:22px}.side{display:flex;gap:10px;align-items:baseline}}
+@media (prefers-reduced-motion:no-preference){.bar span{transition:width .25s ease}}
+.chip.primary{background:var(--pine);border-color:var(--pine);color:var(--surface)}
+.chip:disabled{opacity:.6;cursor:progress}
+.badge.new{background:var(--pine);color:var(--surface)}
+code{font-family:var(--f-mono);font-size:.9em}
+.protokoll{font-family:var(--f-mono);font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 12px;max-height:240px;overflow:auto;white-space:pre-wrap;margin:0}
+details.edit>summary{cursor:pointer;font-size:13px;color:var(--pine);font-weight:600}
+.editgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 14px;margin-top:10px}
+.editgrid label{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+.editgrid input{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px;min-width:0}
+.editgrid .actions{grid-column:1/-1}
+input:focus-visible{outline:2px solid var(--rape);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Haus oder Hof kaufen · Brandenburg &amp; Sachsen</div>
+      <h1>Hofsuche Brandenburg</h1>
+      <p class="lede" id="lede">Rangliste nach deinen Kriterien. Die Gewichte kannst du unten verschieben, Muss-Kriterien und Kosten stehen in <code>config.toml</code>.</p>
+    </div>
+    <div class="stats" id="stats" aria-live="polite"><span>Lade Inserate …</span></div>
+    <div class="actions">
+      <button class="chip primary" id="suchlauf" type="button">Suchlauf starten</button>
+      <span class="saved" id="quellen"></span>
+    </div>
+    <div class="banner" id="banner" hidden></div>
+    <pre class="protokoll" id="protokoll" hidden></pre>
+  </header>
+
+  <details class="panel" id="wpanel">
+    <summary>Gewichtung anpassen</summary>
+    <div class="weights" id="weights"></div>
+    <div class="actions" style="margin-top:10px"><button class="chip" id="resetW" type="button">Standard aus config.toml</button></div>
+  </details>
+
+  <div class="toolbar" role="group" aria-label="Filter">
+    <button class="chip" data-f="alle" aria-pressed="true" type="button">Alle</button>
+    <button class="chip" data-f="BB" aria-pressed="false" type="button">Brandenburg</button>
+    <button class="chip" data-f="SN" aria-pressed="false" type="button">Sachsen</button>
+    <button class="chip" data-f="ilb" aria-pressed="false" type="button">Nur ILB-Orte</button>
+    <button class="chip" data-f="merk" aria-pressed="false" type="button">Gemerkt</button>
+    <button class="chip" data-f="neu" aria-pressed="false" type="button">Neu seit letztem Besuch</button>
+  </div>
+  <div class="legend" id="legend"></div>
+
+  <section class="list" id="list" aria-label="Rangliste">
+    <div class="empty">Noch keine Inserate. Im Terminal <code>python -m hofsuche start</code> ausführen, um die Startliste zu laden.</div>
+  </section>
+
+  <details class="panel" id="outpanel">
+    <summary>Fällt raus (Muss-Kriterien verfehlt) <span id="outcount" class="num"></span></summary>
+    <div class="list" id="outlist" style="margin-top:12px"></div>
+  </details>
+
+  <section class="panel method">
+    <h2>So wird gerechnet</h2>
+    <p><b>Sanierungsstau</b> ist eine grobe Schätzung pro m² Wohnfläche nach dem Zustand: <span id="raten"></span>. Ein Gutachter vor Ort ersetzt das nicht. Wenn du den Zustand korrigierst, ändert sich die Schätzung sofort.</p>
+    <p><b>Nebenkosten</b>: Grunderwerbsteuer (Brandenburg 6,5 %, Sachsen 5,5 %), rund 2 % Notar und Grundbuch, bei Maklerobjekten 3,57 %. Sie stehen in der Gesamtsumme, zählen aber nicht ins Budget.</p>
+    <p><b>ILB-Förderung</b> (Richtlinie vom 13.02.2026): Erwerb in Orten mit Gebietskulisse, Wohnfläche bis ca. 168 m² (mit Einliegerwohnung bis ca. 240 m²), mindestens 500 €/m² Sanierung. Die Ortsliste in <code>data/ilb_orte.txt</code> stammt von der LBV-Karte mit Stand 30.06.2026. Ob ein Ortsteil zählt, bestätigt die Gemeinde.</p>
+    <p><b>Automatisch gelesene Angaben</b> (aus Mails und Exposés) sind Vermutungen aus dem Text. Bahn, Fahrzeit und Grundstück bitte über „Angaben korrigieren“ prüfen. Korrekturen gewinnen immer gegen spätere Suchläufe.</p>
+  </section>
+</div>
+
+<script>
+(function(){
+  const ZLABEL={saniert:"saniert",gepflegt:"gepflegt",renov:"renovierungsbedürftig",saniebed:"sanierungsbedürftig",rohbau:"entkernt",unbekannt:"unbekannt"};
+  const W_LAB={budget:"Budget",oepnv:"Bahn & Bus",fahrzeit:"Fahrzeit Großstadt",neben:"Nebengelass",ruhe:"Ruhige Lage",zustand:"Wenig Sanierung",ilb:"ILB-Förderung",region:"Brandenburg bevorzugt"};
+  const W_COL={budget:"var(--pine)",oepnv:"#3b82a0",fahrzeit:"#6c8fb8",neben:"#8a6d3b",ruhe:"#6aa36f",zustand:"#b07a52",ilb:"var(--rape)",region:"#7d6aa8"};
+  const STATUS={neu:"Neu",merken:"Gemerkt",besichtigen:"Besichtigung",raus:"Kein Interesse"};
+  const BAHN={"":"unbekannt","0":"kein ÖPNV","1":"nur Bus / Bahnhof weit","2":"Bahnhof bis ca. 6 km","3":"Bahnhof bis ca. 2 km"};
+  const RUHE={"":"unbekannt","1":"laut (Durchgangsstraße)","2":"ruhig","3":"sehr ruhig / Alleinlage"};
+  const NEBEN={"":"unbekannt","0":"keine","1":"etwas (Garage, Schuppen)","2":"Scheune / Stall"};
+  let W_DEF={}, W={}, rows=[], filter=load("hof-f")||"alle", letzterBesuch=load("hof-besuch");
+  save("hof-besuch",new Date().toISOString().slice(0,10));
+
+  function load(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
+  function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+  const fmt=new Intl.NumberFormat("de-DE",{maximumFractionDigits:0});
+  const eur=n=>n==null?"–":fmt.format(Math.round(n/1000)*1000)+" €";
+  const m2=n=>n==null?"?":fmt.format(n)+" m²";
+  function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+  function banner(t){const b=document.getElementById("banner");b.textContent=t||"";b.hidden=!t;}
+
+  function punkte(k){
+    const sum=Object.keys(W_DEF).reduce((a,x)=>a+(W[x]||0),0)||1;
+    const parts={};let s=0;
+    for(const x in W_DEF){parts[x]=(k[x]||0)*(W[x]||0)/sum*100;s+=parts[x];}
+    return {score:s,parts};
+  }
+
+  function buildWeights(){
+    const box=document.getElementById("weights");box.innerHTML="";
+    for(const k in W_DEF){
+      const l=document.createElement("label");l.htmlFor="w-"+k;
+      l.innerHTML=`<span class="lab"><span>${W_LAB[k]||k}</span><output id="o-${k}">${W[k]}</output></span><input type="range" id="w-${k}" min="0" max="40" step="1" value="${W[k]}">`;
+      l.querySelector("input").addEventListener("input",e=>{W[k]=+e.target.value;document.getElementById("o-"+k).textContent=W[k];save("hof-w",W);render();});
+      box.appendChild(l);
+    }
+    document.getElementById("legend").innerHTML=Object.keys(W_DEF).map(k=>`<span><i style="background:${W_COL[k]}"></i>${W_LAB[k]||k}</span>`).join("");
+  }
+  document.getElementById("resetW").addEventListener("click",()=>{W={...W_DEF};save("hof-w",W);buildWeights();render();});
+  document.querySelectorAll("[data-f]").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.f;save("hof-f",filter);render();}));
+
+  function sel(name,id,map,val){
+    return `<select id="${name}-${id}" data-k="${name}">${Object.entries(map).map(([k,v])=>`<option value="${k}"${String(val??"")===k?" selected":""}>${v}</option>`).join("")}</select>`;
+  }
+  function editor(r){
+    const id=esc(r.id);
+    return `<details class="edit"><summary>Angaben korrigieren${r.korrigiert&&r.korrigiert.length?` <span class="saved">(${r.korrigiert.length} korrigiert)</span>`:""}</summary>
+      <form class="editgrid" data-edit="${id}">
+        <label>Kaufpreis €<input id="preis-${id}" data-k="preis" type="number" inputmode="numeric" value="${r.preis??""}"></label>
+        <label>Wohnfläche m²<input id="wf-${id}" data-k="wf" type="number" inputmode="numeric" value="${r.wf??""}"></label>
+        <label>Grundstück m²<input id="grund-${id}" data-k="grund" type="number" inputmode="numeric" value="${r.grund??""}"></label>
+        <label>Auto bis Großstadt (min)<input id="fahrzeit-${id}" data-k="fahrzeit" type="number" inputmode="numeric" value="${r.fahrzeit??""}"></label>
+        <label>Zustand${sel("zustand",id,ZLABEL,r.zustand)}</label>
+        <label>Bahn & Bus${sel("bahn",id,BAHN,r.bahn)}</label>
+        <label>Lage${sel("ruhe",id,RUHE,r.ruhe!=null?Math.round(r.ruhe):"")}</label>
+        <label>Nebengelass${sel("neben",id,NEBEN,r.neben!=null?Math.round(r.neben):"")}</label>
+        <label>ILB-Ort${sel("ilbOrt",id,{"ja":"ja","nein":"nein","prüfen":"prüfen"},r.ilbOrt)}</label>
+        <label>Bundesland${sel("land",id,{"":"?","BB":"Brandenburg","SN":"Sachsen"},r.land)}</label>
+        <div class="actions"><button class="chip primary" type="submit">Speichern</button><span class="saved">Leeres Feld = Korrektur zurücknehmen</span></div>
+      </form></details>`;
+  }
+
+  function card(r,rank){
+    const b=r.bewertung, {score,parts}=punkte(b.komponenten), st=r.status||"neu", id=esc(r.id);
+    const badges=[];
+    b.muss.forEach(m=>badges.push(`<span class="badge bad">${esc(m)}</span>`));
+    if(r.grund==null) badges.push(`<span class="badge warn">Grundstück prüfen</span>`);
+    if(r.wf==null) badges.push(`<span class="badge warn">Wohnfläche fehlt</span>`);
+    if(r.preis==null) badges.push(`<span class="badge warn">Preis fehlt</span>`);
+    if(b.ueber_budget) badges.push(`<span class="badge bad">über Budget</span>`);
+    if(b.ilb_text) badges.push(`<span class="badge ilb">${esc(b.ilb_text)}</span>`);
+    if(r.land==="SN") badges.push(`<span class="badge">Sachsen</span>`);
+    if(!r.geprueft) badges.push(`<span class="badge warn">nur Vorschau/Mail gelesen</span>`);
+    if(letzterBesuch && r.erstmals>letzterBesuch) badges.push(`<span class="badge new">neu</span>`);
+    if(st!=="neu") badges.push(`<span class="badge">${STATUS[st]}</span>`);
+    const bar=Object.keys(W_DEF).map(k=>`<span style="width:${parts[k].toFixed(1)}%;background:${W_COL[k]}" title="${W_LAB[k]}: ${parts[k].toFixed(0)} Punkte"></span>`).join("");
+    const opts=Object.entries(STATUS).map(([k,v])=>`<option value="${k}"${k===st?" selected":""}>${v}</option>`).join("");
+    const ort=[r.ort,r.gemeinde&&r.gemeinde!==r.ort?r.gemeinde:null].filter(Boolean).map(esc).join(", ")||"Ort unbekannt";
+    return `<article class="card${st==="raus"?" raus":""}">
+      <div class="side"><div class="rank num">${rank??"–"}</div><div class="score num">${score.toFixed(0)} Pkt.</div></div>
+      <div class="body">
+        <div class="head"><h3>${esc(r.titel)}</h3><span class="where">${ort}${r.plz?" · "+esc(r.plz):""}</span></div>
+        <div class="bar" aria-label="Punkte nach Kriterium">${bar}</div>
+        <dl class="facts">
+          <div><dt>Kaufpreis</dt><dd>${eur(r.preis)}</dd></div>
+          <div><dt>Sanierung ca.</dt><dd>${eur(b.sanierung)}</dd></div>
+          <div><dt>Preis + Sanierung</dt><dd>${eur(b.basis)}</dd></div>
+          <div><dt>Gesamt inkl. NK</dt><dd>${eur(b.gesamt)}</dd></div>
+          <div><dt>Wohnfläche</dt><dd>${m2(r.wf)}</dd></div>
+          <div><dt>Grundstück</dt><dd>${m2(r.grund)}</dd></div>
+          <div><dt>Zustand</dt><dd>${ZLABEL[r.zustand]||"?"}</dd></div>
+          <div><dt>Auto bis ${esc(r.ziel||"Großstadt")}</dt><dd>${r.fahrzeit?"ca. "+r.fahrzeit+" min":"?"}</dd></div>
+        </dl>
+        <div class="badges">${badges.join("")}</div>
+        ${r.info?`<p class="info">${esc(r.info)}</p>`:""}
+        <p class="transit">ÖPNV: ${esc(r.bahnText||"nicht angegeben, prüfen")}</p>
+        <div class="actions">
+          <a href="${esc(r.url)}" target="_blank" rel="noopener">Inserat öffnen (${esc(r.quelle||"Web")})</a>
+          <label for="st-${id}" class="saved">Status</label>
+          <select id="st-${id}" data-st="${id}">${opts}</select>
+          <span class="saved">gefunden ${esc(r.erstmals||"")}</span>
+        </div>
+        <div class="note-row">
+          <label for="nt-${id}" class="saved">Deine Notiz</label>
+          <textarea id="nt-${id}" data-nt="${id}" placeholder="z. B. Makler angerufen, Besichtigung am …">${esc(r.notiz||"")}</textarea>
+        </div>
+        ${editor(r)}
+      </div>
+    </article>`;
+  }
+
+  function render(){
+    document.querySelectorAll("[data-f]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===filter)));
+    if(!rows.length) return;
+    const mit=rows.map(r=>({r,s:punkte(r.bewertung.komponenten).score}));
+    const vis=mit.filter(({r})=>filter==="alle"||(filter==="ilb"?(r.land==="BB"&&r.ilbOrt!=="nein"):filter==="merk"?["merken","besichtigen"].includes(r.status):filter==="neu"?(letzterBesuch&&r.erstmals>letzterBesuch):r.land===filter));
+    const ok=vis.filter(o=>!o.r.bewertung.muss.length).sort((a,b)=>{const x=a.r.status==="raus",y=b.r.status==="raus";return x!==y?(x?1:-1):b.s-a.s;});
+    const bad=vis.filter(o=>o.r.bewertung.muss.length).sort((a,b)=>b.s-a.s);
+    document.getElementById("list").innerHTML=ok.length?ok.map((o,i)=>card(o.r,i+1)).join(""):`<div class="empty">Keine Inserate in diesem Filter.</div>`;
+    document.getElementById("outlist").innerHTML=bad.map(o=>card(o.r,null)).join("")||`<div class="empty">Nichts ausgeschieden.</div>`;
+    document.getElementById("outcount").textContent=`(${bad.length})`;
+    const passt=mit.filter(o=>!o.r.bewertung.muss.length);
+    const neu=letzterBesuch?rows.filter(r=>r.erstmals>letzterBesuch).length:0;
+    document.getElementById("stats").innerHTML=`<span><b>${rows.length}</b>Inserate</span><span><b>${passt.length}</b>erfüllen die Muss-Kriterien</span><span><b>${passt.filter(o=>!o.r.bewertung.ueber_budget).length}</b>davon im Budget</span><span><b>${rows.filter(r=>r.grund==null).length}</b>ohne Grundstücksangabe</span>${neu?`<span><b>${neu}</b>neu seit deinem letzten Besuch</span>`:""}`;
+  }
+
+  async function laden(){
+    try{
+      const res=await fetch("/api/inserate");
+      if(!res.ok) throw new Error(res.status);
+      const d=await res.json();
+      W_DEF=d.gewichte; W={...W_DEF,...(load("hof-w")||{})};
+      for(const k of Object.keys(W)) if(!(k in W_DEF)) delete W[k];
+      rows=d.inserate;
+      document.getElementById("raten").textContent=Object.entries(d.sanierung).map(([k,v])=>`${ZLABEL[k]||k} ${fmt.format(v)} €`).join(", ");
+      const q=[d.suchquellen.mail?"E-Mail-Suchaufträge":null,d.suchquellen.web?"Suchseiten":null].filter(Boolean);
+      document.getElementById("quellen").textContent=q.length?"Quellen: "+q.join(" und "):"Keine Quelle eingeschaltet. Siehe config.toml.";
+      const k=d.kriterien;
+      document.getElementById("lede").textContent=`Rangliste nach deinen Kriterien: mindestens ${fmt.format(k.min_grundstueck_m2)} m² Grundstück und ${k.min_wohnflaeche_m2} m² Wohnfläche, Kaufpreis plus geschätzte Sanierung bis ${fmt.format(k.budget_eur)} €. Die Gewichte kannst du unten verschieben.`;
+      buildWeights(); render(); banner("");
+      if(!rows.length) document.getElementById("list").innerHTML=`<div class="empty">Noch keine Inserate. Im Terminal <code>python -m hofsuche start</code> ausführen oder einen Suchlauf starten.</div>`;
+    }catch(e){banner("Der lokale Server antwortet nicht. Läuft python -m hofsuche dashboard noch?");}
+  }
+
+  async function patch(id,body){
+    const res=await fetch("/api/inserate/"+encodeURIComponent(id),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(!res.ok){const t=await res.json().catch(()=>({}));banner("Speichern hat nicht geklappt: "+(t.fehler||res.status));return false;}
+    return true;
+  }
+
+  document.addEventListener("change",async e=>{
+    const id=e.target.dataset.st; if(!id) return;
+    if(await patch(id,{status:e.target.value})){const r=rows.find(x=>x.id===id); if(r) r.status=e.target.value; render();}
+  });
+  document.addEventListener("focusout",async e=>{
+    const id=e.target.dataset.nt; if(!id) return;
+    const r=rows.find(x=>x.id===id); if(!r||(r.notiz||"")===e.target.value) return;
+    if(await patch(id,{notiz:e.target.value})) r.notiz=e.target.value;
+  });
+  document.addEventListener("submit",async e=>{
+    const form=e.target.closest("[data-edit]"); if(!form) return;
+    e.preventDefault();
+    const korrektur={};
+    form.querySelectorAll("[data-k]").forEach(el=>{
+      const k=el.dataset.k, v=el.value.trim();
+      korrektur[k]= v===""?null:(["preis","wf","grund","fahrzeit","bahn","ruhe","neben"].includes(k)?Number(v):v);
+    });
+    if(korrektur.bahn!=null) korrektur.bahnText=BAHN[String(korrektur.bahn)]+" (von dir eingetragen)";
+    if(await patch(form.dataset.edit,{korrektur})) laden();
+  });
+
+  document.getElementById("suchlauf").addEventListener("click",async e=>{
+    const btn=e.currentTarget, pre=document.getElementById("protokoll");
+    btn.disabled=true; btn.textContent="Suche läuft …"; pre.hidden=true;
+    try{
+      const res=await fetch("/api/suchlauf",{method:"POST"}); const d=await res.json();
+      pre.textContent=(d.protokoll||[]).join("\n")||d.fehler||""; pre.hidden=!pre.textContent;
+      banner(res.ok?`${d.neu} neue Inserate gefunden.`:(d.fehler||"Suchlauf fehlgeschlagen."));
+      await laden();
+    }catch(err){banner("Suchlauf fehlgeschlagen: Server nicht erreichbar.");}
+    btn.disabled=false; btn.textContent="Suchlauf starten";
+  });
+
+  render(); laden();
+})();
+</script>
+</body>
+</html>

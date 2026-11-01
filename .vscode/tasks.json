@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Hofsuche: Startliste laden",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m hofsuche start",
+      "problemMatcher": []
+    },
+    {
+      "label": "Hofsuche: Suchlauf",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m hofsuche suche",
+      "problemMatcher": []
+    },
+    {
+      "label": "Hofsuche: Dashboard",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m hofsuche dashboard",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Hofsuche: Tests",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m unittest -v",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    }
+  ]
+}

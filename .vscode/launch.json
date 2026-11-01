@@ -1,0 +1,34 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Dashboard starten",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "hofsuche",
+      "args": ["dashboard"],
+      "envFile": "${workspaceFolder}/.env",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Suchlauf",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "hofsuche",
+      "args": ["suche"],
+      "envFile": "${workspaceFolder}/.env",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Rangliste im Terminal",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "hofsuche",
+      "args": ["liste", "-n", "25"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ]
+}

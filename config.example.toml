@@ -1,0 +1,74 @@
+# Kopiere diese Datei nach config.toml und trage deine Daten ein.
+# config.toml steht in .gitignore und landet nie im Repository.
+
+[kriterien]
+# Muss-Kriterien: Inserate darunter landen unter „Fällt raus“.
+min_grundstueck_m2 = 3000
+min_wohnflaeche_m2 = 120
+# Kaufpreis + geschätzte Sanierung. Darüber gibt es den Hinweis „über Budget“.
+budget_eur = 400000
+# Ab hier zählt der Budget-Teil voll, bei budget_null_eur gibt es 0 Punkte.
+budget_voll_eur = 250000
+budget_null_eur = 450000
+# Fahrzeit (Auto, Minuten) zur Großstadt: bis hier volle Punkte, ab fahrzeit_null 0 Punkte.
+fahrzeit_voll_min = 45
+fahrzeit_null_min = 120
+
+[gewichte]
+# Standardgewichte; im Dashboard kannst du sie mit Reglern verschieben.
+budget = 25
+oepnv = 20
+fahrzeit = 15
+neben = 10
+ruhe = 10
+zustand = 10
+ilb = 10
+region = 10
+
+[sanierung]
+# Geschätzte Sanierungskosten in € pro m² Wohnfläche nach Zustand.
+saniert = 150
+gepflegt = 350
+renov = 700
+saniebed = 1200
+rohbau = 1500
+unbekannt = 800
+
+[mail]
+# E-Mail-Suchaufträge der Portale per IMAP lesen.
+# Bei Gmail: IMAP aktivieren und ein App-Passwort anlegen (normales Passwort geht nicht).
+aktiv = true
+host = "imap.gmail.com"
+port = 993
+benutzer = "deine.adresse@gmail.com"
+# Passwort NICHT hier eintragen, sondern als Umgebungsvariable HOFSUCHE_IMAP_PASSWORT setzen
+# (in VS Code: Datei .env im Projektordner, siehe .env.example).
+ordner = "INBOX"
+# Nur Mails der letzten N Tage durchsuchen.
+tage = 14
+# Absender, deren Mails ausgewertet werden (Teilstrings genügen).
+absender = [
+  "immobilienscout24.de",
+  "immowelt.de",
+  "kleinanzeigen.de",
+  "ohne-makler.net",
+]
+
+[web]
+# Suchseiten direkt abrufen. Achtung: Die Portale untersagen automatisierte Abrufe
+# in ihren Nutzungsbedingungen und blocken sie teilweise. Nur für den privaten Gebrauch,
+# selten aufrufen, und die Pause nicht verkleinern.
+aktiv = false
+pause_sekunden = 8
+# Wie viele neue Inserate pro Lauf im Detail geöffnet werden.
+max_details = 25
+# Trage hier die URLs deiner gespeicherten Suchen ein: im Browser auf dem Portal
+# suchen, Filter setzen, die Adresse aus der Adresszeile kopieren.
+suchseiten = [
+  "https://www.kleinanzeigen.de/s-haus-kaufen/brandenburg/vierseitenhof/k0c208l7711",
+  "https://www.kleinanzeigen.de/s-haus-kaufen/brandenburg/resthof/k0c208l7711",
+  "https://www.kleinanzeigen.de/s-haus-kaufen/sachsen/dreiseitenhof/k0c208l3799",
+]
+
+[server]
+port = 8765
